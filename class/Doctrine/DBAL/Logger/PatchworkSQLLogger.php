@@ -21,8 +21,6 @@ use Doctrine\DBAL\Logging\SQLLogger;
  */
 class PatchworkSQLLogger implements SQLLogger
 {
-    protected $query;
-
     /**
      * {@inheritdoc}
      */
