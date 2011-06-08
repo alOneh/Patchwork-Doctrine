@@ -1,1 +1,14 @@
-Doctrine DBAL integration in Patchwork Framework
+Doctrine ORM integration in Patchwork Framework
+
+'DSN' => array(
+        'dbname'   => 'database',
+        'user'     => 'user',
+        'password' => 'password',
+        'host'     => 'localhost',
+        'driver'   => 'pdo_mysql'
+    ),
+    'doctrine.cache'       => '\Doctrine\Common\Cache\ArrayCache', // \Doctrine\Common\Cache\ApcCache
+    'doctrine.mapping.dir' => 'data/mapping',
+    'doctrine.proxy.dir'   => 'class/Proxies',
+    'doctrine.proxy.generate' => true, // false to production env
+    'doctrine.logger'      => ''
