@@ -71,13 +71,13 @@ abstract class agent_pForm_entity extends agent_pForm
         {
             foreach ($this->data as $k => $v) is_scalar($v) && $o->$k = $v;
 
-            if ($this instanceof agent_pForm_record_indexable) $o = $this->composeRecord($o);
+            if ($this instanceof agent_pForm_entity_indexable) $o = $this->composeRecord($o);
 
             return parent::compose($o);
         }
         else
         {
-            return $this instanceof agent_pForm_record_indexable
+            return $this instanceof agent_pForm_entity_indexable
                 ? $this->composeIndex($o)
                 : parent::compose($o);
         }
@@ -89,21 +89,20 @@ abstract class agent_pForm_entity extends agent_pForm
         $this->setScalarData($data);
 
         $getId = 'get' . Doctrine\Common\Util\Inflector::classify("{$t}_id");
-        $id = $this->entity->$getId();
 
         if (empty($this->data))
         {
             EM()->persist($this->entity);
             EM()->flush();
 
-            $this->data = (object) array("{$t}_id" => $id);
+            $this->data = (object) array("{$t}_id" => $this->entity->$getId());
         }
         else
         {
             EM()->flush();
         }
 
-        return implode('/', $this->type) . "/{$id}";
+        return implode('/', $this->type) . "/{$this->entity->$getId()}";
     }
 
     protected function getEntityMetadata($entity)
@@ -145,6 +144,24 @@ abstract class agent_pForm_entity extends agent_pForm
             $setter = "set" . Doctrine\Common\Util\Inflector::classify($p);
             $this->entity->$setter($data[$p]);
         }
+    }
+
+    public function loadAssociation($assoc)
+    {
+        if ($this->entityMetadata->hasAssociation($assoc))
+        {
+            $identifier = $this->entityMetadata->getTableName();
+
+            $dql = "SELECT a
+                    FROM {$this->entityMetadata->getAssociationTargetClass($assoc)} a
+                    WHERE a.{$identifier} = ?1";
+            $dql = EM()->createQuery($dql);
+            $dql->setParameter(1, $this->get->__1__);
+
+            return new loop_array($dql->getArrayResult(), 'filter_rawArray');
+        }
+        else
+            throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($this->entityName, $assoc);
     }
 }
 
