@@ -15,8 +15,13 @@ namespace Doctrine\Common\Annotations;
 
 class AnnotationReader extends self
 {
-    public function getClassAnnotations(ReflectionClass $class)
+    public function getClassAnnotations(\ReflectionClass $class)
     {
-        return parent::getClassAnnotations($class->getParentClass());
+        $c = $class->getName();
+        $i = strrpos($c, '__');
+
+        return false !== $i && (false !== $c = substr($c, $i+2)) && '' === trim($c, '0123456789')
+            ? array()
+            : parent::getClassAnnotations($class->getParentClass());
     }
 }
