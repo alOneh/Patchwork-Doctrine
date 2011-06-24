@@ -19,8 +19,7 @@ abstract class agent_pForm_entity extends agent_pForm
 
     $type = array(),
     $entity,
-    $entityName,
-    $entityMetadata;
+    $entityName;
 
     function control()
     {
@@ -49,10 +48,8 @@ abstract class agent_pForm_entity extends agent_pForm
         {
             $this->entity = EM()->find($this->entityName, $this->get->__1__);
 
-            $this->getData();
-
             $this->entity || patchwork::forbidden();
-            $this->data = (object) $this->entity->data;
+            $this->data = (object) $this->getEntityValuesOf($this->entity);
         }
         else if ($this instanceof agent_pForm_entity_indexable)
         {
@@ -86,7 +83,7 @@ abstract class agent_pForm_entity extends agent_pForm
     protected function save($data)
     {
         $t = implode('_', $this->type);
-        $this->setScalarData($data);
+        $this->setScalarData($this->entity, $data);
 
         $getId = 'get' . Doctrine\Common\Util\Inflector::classify("{$t}_id");
 
@@ -105,40 +102,63 @@ abstract class agent_pForm_entity extends agent_pForm
         return implode('/', $this->type) . "/{$this->entity->$getId()}";
     }
 
+    /**
+     * Return the ClassMetadata of an Entity
+     *
+     * @param Entity $entity
+     * @return ClassMetadata
+     */
     protected function getEntityMetadata($entity)
     {
-        $this->entityMetadata = EM()->getClassMetadata(get_class($entity));
+        return EM()->getClassMetadata(get_class($entity));
     }
 
-    protected function getEntityProperties()
+    /**
+     * Return an array of the entity's values
+     *
+     * @param Entity $entity
+     * @return array $data
+     */
+    protected function getEntityValuesOf($entity)
     {
-        return $this->entityMetadata->getColumnNames();
-    }
+        $data = array();
 
-    protected function getData()
-    {
-        $properties = $this->getEntityProperties();
+        $properties = $this->getEntityMetadata($entity)->getColumnNames();
 
         foreach ($properties as $p)
         {
             $getter = "get" . Doctrine\Common\Util\Inflector::classify($p);
-            $this->entity->data[$p] = $this->entity->$getter();
+            $data[$p] = $entity->$getter();
 
-            if ($this->entity->data[$p] instanceof DateTime)
-                $this->entity->data[$p] = $this->entity->data[$p]->format('Y-m-d');
+            if ($data[$p] instanceof DateTime)
+            {
+                $date = $data[$p];
+                $data[$p] = $date->format('c');
+                $data[$p . '_timestamp'] = $date->format('U');
+            }
         }
+
+        return $data;
     }
 
-    protected function setScalarData($data)
+    /**
+     * Provide set* method foreach entity columns
+     *
+     * @param Entity $entity
+     * @param array $data
+     */
+    protected function setScalarData($entity, $data)
     {
-        foreach ($this->getEntityProperties() as $p)
+        $properties = $this->getEntityMetadata($entity)->getColumnNames();
+
+        foreach ($properties as $p)
         {
             // Test if the field if the identifier (entity_id)
-            if (($this->entityMetadata->isIdentifier($p)))
+            if ($this->getEntityMetadata($entity)->isIdentifier($p))
                 continue;
 
             // Test if the field is a date type, if true save it as a DateTime Object
-            if ('date' == $this->entityMetadata->getTypeOfField($p))
+            if ('date' == $this->getEntityMetadata($entity)->getTypeOfField($p))
                 $data[$p] = new DateTime($data[$p]);
 
             $setter = "set" . Doctrine\Common\Util\Inflector::classify($p);
@@ -146,14 +166,23 @@ abstract class agent_pForm_entity extends agent_pForm
         }
     }
 
-    public function loadAssociation($assoc)
+    /**
+     * Return a loop_array of the association mapping of an entity
+     *
+     * @param Entity $entity
+     * @param string $assoc
+     * @return loop_array
+     */
+    public function loadAssociation($entity, $assoc)
     {
-        if ($this->entityMetadata->hasAssociation($assoc))
+        $entityMetadata = $this->getEntityMetadata($entity);
+
+        if ($entityMetadata->hasAssociation($assoc))
         {
-            $identifier = $this->entityMetadata->getTableName();
+            $identifier = $entityMetadata->getTableName();
 
             $dql = "SELECT a
-                    FROM {$this->entityMetadata->getAssociationTargetClass($assoc)} a
+                    FROM {$entityMetadata->getAssociationTargetClass($assoc)} a
                     WHERE a.{$identifier} = ?1";
             $dql = EM()->createQuery($dql);
             $dql->setParameter(1, $this->get->__1__);
@@ -161,7 +190,7 @@ abstract class agent_pForm_entity extends agent_pForm
             return new loop_array($dql->getArrayResult(), 'filter_rawArray');
         }
         else
-            throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($this->entityName, $assoc);
+            throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($entity, $assoc);
     }
 }
 
