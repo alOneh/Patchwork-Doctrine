@@ -17,185 +17,193 @@ abstract class agent_pForm_entity extends agent_pForm
 
     protected
 
-    $type = array(),
+    $entityUrl,
+    $entityClass,
     $entity,
-    $entityName;
+    $entityIsNew = false;
+
 
     function control()
     {
         parent::control();
 
-        $t = explode('_', substr(get_class($this), 6));
-
-        if ('new' === end($t))
-        {
-            $new = true;
-            array_pop($t);
-        }
-        else $new = false;
-
-        $this->type || $this->type = $t;
-
-        $t = ucwords(implode('_', $this->type));
-        $this->entityName = "Entities\\{$t}";
-
         if ($this->entity) return;
-        else $this->entity = new $this->entityName();
 
-        $this->getEntityMetadata($this->entity);
+        if (empty($this->entityUrl))
+        {
+            $u = explode('_', substr(get_class($this), 6));
+
+            if ('new' === end($u))
+            {
+                $this->entityIsNew = true;
+                array_pop($u);
+            }
+
+            $this->entityUrl = implode('/', $u);
+        }
+
+        $this->entityClass = 'Entities\\' . str_replace('/', '', ucwords($this->entityUrl));
 
         if (!empty($this->get->__1__))
         {
-            $this->entity = EM()->find($this->entityName, $this->get->__1__);
-
+            $this->entity = EM()->find($this->entityClass, $this->get->__1__);
             $this->entity || patchwork::forbidden();
-            $this->data = (object) $this->getEntityValuesOf($this->entity);
+        }
+        else if ($this->entityIsNew)
+        {
+            $this->entity = new $this->entityClass;
         }
         else if ($this instanceof agent_pForm_entity_indexable)
         {
-            $this->template = implode('/', $this->type) . '/index';
+            $this->template = $this->entityUrl . '/index';
         }
-        else if (!$this->entity)
-        {
-            patchwork::forbidden();
-        }
-
+        else patchwork::forbidden();
     }
 
     function compose($o)
     {
-        if ($this->data)
+        if (empty($this->entity))
         {
-            foreach ($this->data as $k => $v) is_scalar($v) && $o->$k = $v;
-
-            if ($this instanceof agent_pForm_entity_indexable) $o = $this->composeRecord($o);
-
-            return parent::compose($o);
+            return $this->composeIndex($o);
         }
         else
         {
-            return $this instanceof agent_pForm_entity_indexable
-                ? $this->composeIndex($o)
-                : parent::compose($o);
+            if (!$this->entityIsNew)
+            {
+                $this->data = $this->getEntityData();
+                foreach ($this->data as $k => $v) $o->$k = $v;
+            }
+
+            if ($this instanceof agent_pForm_entity_indexable)
+            {
+                $o = $this->composeEntity($o);
+            }
+
+            return parent::compose($o);
         }
     }
 
     protected function save($data)
     {
-        $t = implode('_', $this->type);
-        $this->setScalarData($this->entity, $data);
+        $this->setEntityData($data);
 
-        $getId = 'get' . Doctrine\Common\Util\Inflector::classify("{$t}_id");
+        $this->entityIsNew && EM()->persist($this->entity);
+        EM()->flush();
 
-        if (empty($this->data))
-        {
-            EM()->persist($this->entity);
-            EM()->flush();
+        $id = $this->getEntityMetadata();
+        $id = $id->getSingleIdentifierFieldName();
+        $id = 'get' . Doctrine\Common\Util\Inflector::classify($id);
 
-            $this->data = (object) array("{$t}_id" => $this->entity->$getId());
-        }
-        else
-        {
-            EM()->flush();
-        }
-
-        return implode('/', $this->type) . "/{$this->entity->$getId()}";
+        return $this->entityUrl . '/' . $this->entity->$id();
     }
 
     /**
      * Return the ClassMetadata of an Entity
      *
-     * @param Entity $entity
      * @return ClassMetadata
      */
-    protected function getEntityMetadata($entity)
+    protected function getEntityMetadata()
     {
-        return EM()->getClassMetadata(get_class($entity));
+        return EM()->getClassMetadata($this->entityClass);
     }
 
     /**
      * Return an array of the entity's values
      *
-     * @param Entity $entity
-     * @return array $data
+     * @return object $data
      */
-    protected function getEntityValuesOf($entity)
+    protected function getEntityData()
     {
         $data = array();
 
-        $properties = $this->getEntityMetadata($entity)->getColumnNames();
+        $p = $this->getEntityMetadata()->getColumnNames();
 
-        foreach ($properties as $p)
+        foreach ($p as $p)
         {
-            $getter = "get" . Doctrine\Common\Util\Inflector::classify($p);
-            $data[$p] = $entity->$getter();
+            $getProp = 'get' . Doctrine\Common\Util\Inflector::classify($p);
+            $data[$p] = $this->entity->$getProp();
 
             if ($data[$p] instanceof DateTime)
             {
-                $date = $data[$p];
-                $data[$p] = $date->format('c');
-                $data[$p . '_timestamp'] = $date->format('U');
+                $data[$p . '_timestamp'] = $data[$p]->format('U');
+                $data[$p] = $data[$p]->format('c');
             }
         }
 
-        return $data;
+        return (object) $data;
     }
 
     /**
-     * Provide set* method foreach entity columns
+     * Inject data with entity's setters
      *
-     * @param Entity $entity
      * @param array $data
      */
-    protected function setScalarData($entity, $data)
+    protected function setEntityData($data)
     {
-        $properties = $this->getEntityMetadata($entity)->getColumnNames();
+        $meta = $this->getEntityMetadata();
+        $id = $meta->getSingleIdentifierFieldName();
 
-        foreach ($properties as $p)
+        foreach ($data as $f => $v)
         {
-            // Test if the field if the identifier (entity_id)
-            if ($this->getEntityMetadata($entity)->isIdentifier($p))
-                continue;
+            if (in_array($f, $meta->fieldNames) && $f !== $id)
+            {
+                $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
+                $this->entity->$setter($v);
+            }
+            else if (isset($meta->associationMappings[$f]) && $v !== null)
+            {
+                $assocTargetEntity = $meta->associationMappings[$f]['targetEntity'];
 
-            // Test if the field is a date type, if true save it as a DateTime Object
-            if ('date' == $this->getEntityMetadata($entity)->getTypeOfField($p))
-                $data[$p] = new DateTime($data[$p]);
+                if ($v instanceof $assocTargetEntity)
+                {
+                    $v = $v;
+                }
+                else
+                {
+                    $v = EM()->getReference($assocTargetEntity, $v);
+                }
 
-            $setter = "set" . Doctrine\Common\Util\Inflector::classify($p);
-            $this->entity->$setter($data[$p]);
+                $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
+                $this->entity->$setter($v);
+            }
         }
     }
 
     /**
-     * Return a loop_array of the association mapping of an entity
+     * Return a loop of the association mapping of an entity
      *
-     * @param Entity $entity
      * @param string $assoc
-     * @return loop_array
+     * @return loop
      */
-    public function loadAssociation($entity, $assoc)
+    protected function getAssociationLoop($assoc)
     {
-        $entityMetadata = $this->getEntityMetadata($entity);
+        $meta = $this->getEntityMetadata();
 
-        if ($entityMetadata->hasAssociation($assoc))
+        if (!$meta->hasAssociation($assoc))
+            throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($entity, $assoc);
+
+        if (!$this->entityIsNew)
         {
-            $identifier = $entityMetadata->getTableName();
+            $assoc = $meta->associationMappings[$assoc];
+
+            $id = $meta->getSingleIdentifierFieldName();
+            $id = 'get' . Doctrine\Common\Util\Inflector::classify($id);
 
             $dql = "SELECT a
-                    FROM {$entityMetadata->getAssociationTargetClass($assoc)} a
-                    WHERE a.{$identifier} = ?1";
+                    FROM {$assoc['targetEntity']} a
+                    WHERE a.{$assoc['mappedBy']} = ?1";E($assoc);
             $dql = EM()->createQuery($dql);
-            $dql->setParameter(1, $this->get->__1__);
+            $dql->setParameter(1, $this->entity->$id());
 
             return new loop_array($dql->getArrayResult(), 'filter_rawArray');
         }
-        else
-            throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($entity, $assoc);
+
+        return new loop_array(array());
     }
 }
 
 interface agent_pForm_entity_indexable
 {
     function composeIndex($o);
-    function composeRecord($o);
+    function composeEntity($o);
 }
