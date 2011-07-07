@@ -42,7 +42,8 @@ abstract class agent_pForm_entity extends agent_pForm
             $this->entityUrl = implode('/', $u);
         }
 
-        $this->entityClass = 'Entities\\' . str_replace('/', '', ucwords($this->entityUrl));
+        $this->entityClass = 'Entities\\';
+        foreach ($u as $u) $this->entityClass .= ucfirst ($u); //TODO: Ugly
 
         if (!empty($this->get->__1__))
         {
