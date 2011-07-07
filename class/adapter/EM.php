@@ -42,28 +42,8 @@ class adapter_EM
 
         self::$em[$hash] = \Doctrine\ORM\EntityManager::create($dsn, $config);
 
-        \Doctrine\DBAL\Types\Type::addType('action', 'BrevetTypes\ActionType');
-        \Doctrine\DBAL\Types\Type::addType('etat_realisation', 'BrevetTypes\EtatRealisationType');
-        \Doctrine\DBAL\Types\Type::addType('type_propriete', 'BrevetTypes\ProcedureProprieteType');
-        \Doctrine\DBAL\Types\Type::addType('reference_date', 'BrevetTypes\ReferenceDateType');
-        \Doctrine\DBAL\Types\Type::addType('reference_delai_report', 'BrevetTypes\ReferenceDelaiReportType');
-        \Doctrine\DBAL\Types\Type::addType('role', 'BrevetTypes\RoleType');
-        \Doctrine\DBAL\Types\Type::addType('severite', 'BrevetTypes\SeveriteType');
-
         self::$em[$hash]->getConnection()->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('ActionType', 'action');
-        self::$em[$hash]->getConnection()->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('EtatRealisationType', 'etat_realisation');
-        self::$em[$hash]->getConnection()->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('ProcedureProprieteType', 'type_propriete');
-        self::$em[$hash]->getConnection()->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('ReferenceDateType', 'reference_date');
-        self::$em[$hash]->getConnection()->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('ReferenceDelaiReportType', 'reference_delai_report');
-        self::$em[$hash]->getConnection()->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('RoleType', 'role');
-        self::$em[$hash]->getConnection()->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('SeveriteType', 'severite');
+            ->registerDoctrineTypeMapping('enum', 'string');
 
         return self::$em[$hash];
     }
