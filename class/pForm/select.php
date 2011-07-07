@@ -44,13 +44,18 @@ class pForm_select extends self
 
             if (isset($param['entity']))
             {
-                E(EM()->createQuery($param['dql'])->getResult());
-                /*$param['loop'] = new loop_array(
-                    EM()->createQuery($param['dql'])->getResult(),
+                $this->entityName = $param['entity'];
+
+                $dql = !isset($param['dql'])
+                    ? "SELECT e FROM {$param['entity']} e"
+                    : $param['dql'];
+
+                $param['loop'] = new loop_array(
+                    EM()->createQuery($dql)->getResult(),
                     'filter_rawArray'
-                );*/
+                );
             }
-//E($param['loop'], $param['entity']);
+
             if (isset($param['loop']))
             {
                 $this->length = 0;
@@ -126,6 +131,13 @@ class pForm_select extends self
         }
 
         parent::init($param);
+    }
+
+    function getDbValue()
+    {
+        return $this->entityName
+                ? EM()->getReference($this->entityName, $this->value)
+                : parent::getDbValue();
     }
 
     protected function checkError($onempty, $onerror)
