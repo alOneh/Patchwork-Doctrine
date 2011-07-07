@@ -209,6 +209,11 @@ abstract class agent_pForm_entity extends agent_pForm
 
         return new loop_array(array());
     }
+
+    protected function getRepository()
+    {
+        return EM()->getRepository($this->entityClass);
+    }
 }
 
 interface agent_pForm_entity_indexable

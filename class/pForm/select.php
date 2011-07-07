@@ -20,7 +20,8 @@ class pForm_select extends self
     $item = array(),
     $firstItem = false,
     $length = -1,
-    $default;
+    $default,
+    $entityName;
 
 
     protected function init(&$param)
