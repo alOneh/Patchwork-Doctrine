@@ -91,7 +91,7 @@ abstract class agent_pForm_entity extends agent_pForm
         $this->entityIsNew && EM()->persist($this->entity);
         EM()->flush();
 
-        $id = $this->getEntityMetadata();
+        $id = $this->getEntityMetadata($this->entityClass);
         $id = $id->getSingleIdentifierFieldName();
         $id = 'get' . Doctrine\Common\Util\Inflector::classify($id);
 
@@ -103,9 +103,9 @@ abstract class agent_pForm_entity extends agent_pForm
      *
      * @return ClassMetadata
      */
-    protected function getEntityMetadata()
+    protected function getEntityMetadata($entityClass)
     {
-        return EM()->getClassMetadata($this->entityClass);
+        return EM()->getClassMetadata($entityClass);
     }
 
     /**
@@ -113,16 +113,18 @@ abstract class agent_pForm_entity extends agent_pForm
      *
      * @return object $data
      */
-    protected function getEntityData()
+    protected function getEntityData($entity = null)
     {
         $data = array();
 
-        $p = $this->getEntityMetadata()->getColumnNames();
+        $entity || $entity = $this->entity;
+
+        $p = $this->getEntityMetadata(get_class($entity))->getColumnNames();
 
         foreach ($p as $p)
         {
             $getProp = 'get' . Doctrine\Common\Util\Inflector::classify($p);
-            $data[$p] = $this->entity->$getProp();
+            $data[$p] = $entity->$getProp();
 
             if ($data[$p] instanceof DateTime)
             {
@@ -141,7 +143,7 @@ abstract class agent_pForm_entity extends agent_pForm
      */
     protected function setEntityData($data)
     {
-        $meta = $this->getEntityMetadata();
+        $meta = $this->getEntityMetadata($this->entityClass);
         $id = $meta->getSingleIdentifierFieldName();
 
         foreach ($data as $f => $v)
@@ -178,7 +180,7 @@ abstract class agent_pForm_entity extends agent_pForm
      */
     protected function getAssociationLoop($assoc, Doctrine\ORM\Query $query = null)
     {
-        $meta = $this->getEntityMetadata();
+        $meta = $this->getEntityMetadata($this->entityClass);
 
         if (!$meta->hasAssociation($assoc))
             throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($entity, $assoc);
