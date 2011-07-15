@@ -21,12 +21,14 @@ use Doctrine\DBAL\Logging\SQLLogger;
  */
 class PatchworkSQLLogger implements SQLLogger
 {
+    protected $queryInfo;
+
     /**
      * {@inheritdoc}
      */
     public function startQuery($sql, array $params = null, array $types = null)
     {
-        E(array(
+        $this->queryInfo = array(
             'sql'    => $sql,
             'params' => $params,
             'types'  => $types
@@ -38,6 +40,7 @@ class PatchworkSQLLogger implements SQLLogger
      */
     public function stopQuery()
     {
-        E('End of query');
+        \Patchwork::log('doctrine-sql', $this->queryInfo);
+        $this->queryInfo = array();
     }
 }
