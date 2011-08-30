@@ -163,18 +163,9 @@ abstract class agent_pForm_entity extends agent_pForm
                 $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
                 $this->entity->$setter($v);
             }
-            else if (isset($meta->associationMappings[$f]) && $v !== null)
+            else if (isset($meta->associationMappings[$f]))
             {
-                $assocTargetEntity = $meta->associationMappings[$f]['targetEntity'];
-
-                if ($v instanceof $assocTargetEntity)
-                {
-                    $v = $v;
-                }
-                else
-                {
-                    $v = EM()->getReference($assocTargetEntity, $v);
-                }
+                $v || $v = null;
 
                 $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
                 $this->entity->$setter($v);
