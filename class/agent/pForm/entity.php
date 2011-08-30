@@ -15,6 +15,8 @@ abstract class agent_pForm_entity extends agent_pForm
 {
     public $get = array('__1__:i:1' => 0);
 
+    static protected $entityNs = 'Entities';
+
     protected
 
     $entityUrl,
@@ -42,7 +44,8 @@ abstract class agent_pForm_entity extends agent_pForm
             $this->entityUrl = implode('/', $u);
         }
 
-        $this->entityClass = 'Entities\\';
+        $this->entityClass = self::$entityNs . "\\";
+
         foreach ($u as $u) $this->entityClass .= ucfirst ($u); //TODO: Ugly
 
         if (!empty($this->get->__1__))
