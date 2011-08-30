@@ -17,19 +17,13 @@ class pForm_date extends self
 
     function setValue($value)
     {
-        return parent::setValue($value instanceof DateTime
-            ? $value->format('Y-m-d')
-            : $value);
+        if ($value instanceof DateTime) $value = $value->format('Y-m-d');
+        return parent::setValue($value);
     }
 
     function getDbValue()
     {
-        if ($v = $this->getValue())
-        {
-            $v = new DateTime($v);
-        }
-        else $v = null;
-
-        return $v;
+        $v = parent::getDbValue();
+        return $v ? new DateTime($v) : null;
     }
 }
