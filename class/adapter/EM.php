@@ -40,7 +40,22 @@ class adapter_EM
             $config->setSQLLogger(new $CONFIG['doctrine.dbal.logger']);
         }
 
-        self::$em[$hash] = \Doctrine\ORM\EntityManager::create($dsn, $config);
+        $evm = null;
+
+        if ($CONFIG['doctrine.event'])
+        {
+            $evm = new \Doctrine\Common\EventManager();
+
+            if (!empty($CONFIG['doctrine.event.listeners']))
+            {
+                foreach ($CONFIG['doctrine.event.listeners'] as $listener)
+                {
+                    $evm->addEventSubscriber(new $listener());
+                }
+            }
+        }
+
+        self::$em[$hash] = \Doctrine\ORM\EntityManager::create($dsn, $config, $evm);
 
         self::$em[$hash]->getConnection()->getDatabasePlatform()
             ->registerDoctrineTypeMapping('enum', 'string');
