@@ -12,7 +12,9 @@ $CONFIG += array(
     'doctrine.mapping.dir' => 'data/mapping',
     'doctrine.proxy.dir'   => 'class/Proxies',
     'doctrine.proxy.generate' => true, // set to false to production env
-    'doctrine.logger'      => ''
+    'doctrine.dbal.logger'      => '',
+    'doctrine.event'       => false,
+    'doctrine.event.listeners' => array(),
 );
 
 function EM()
