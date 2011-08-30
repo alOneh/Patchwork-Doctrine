@@ -233,6 +233,13 @@ abstract class agent_pForm_entity extends agent_pForm
 
         return $o;
     }
+
+    function getDqlLoop($dql)
+    {
+        $dql = EM()->createQuery($dql);
+
+        return new loop_array($dql->getArrayResult(), 'filter_rawArray');
+    }
 }
 
 interface agent_pForm_entity_indexable
