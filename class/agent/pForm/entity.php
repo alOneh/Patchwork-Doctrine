@@ -217,6 +217,22 @@ abstract class agent_pForm_entity extends agent_pForm
     {
         return EM()->getRepository($this->entityClass);
     }
+
+    protected function getEntityAssociationData($o, $entity, $assoc)
+    {
+        $data = $this->getEntityData($entity);
+        $meta = $this->getEntityMetadata(get_class($entity));
+
+        if (!$meta->hasAssociation($assoc))
+            throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($entity, $assoc);
+
+        $id = $meta->getIdentifier();
+        $this->data->$assoc = $data->{$id[0]};
+
+        foreach ($data as $k => $v) $o->{"{$assoc}_{$k}"} = $v;
+
+        return $o;
+    }
 }
 
 interface agent_pForm_entity_indexable
