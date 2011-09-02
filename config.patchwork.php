@@ -12,7 +12,9 @@ $CONFIG += array(
 */
     'doctrine.cache'       => '\Doctrine\Common\Cache\ArrayCache', // use ApcCache for production env
     'doctrine.mapping.dir' => 'data/mapping',
-    'doctrine.proxy.dir'   => 'class/Proxies',
+    'doctrine.entities.dir' => 'Entity',
+    'doctrine.proxy.dir'    => 'Proxy',
+    'doctrine.proxy.dir'    => 'class/Proxies',
     'doctrine.proxy.generate'  => true, // set to false to production env
     'doctrine.dbal.logger'     => '',
     'doctrine.event'           => false,
