@@ -238,7 +238,15 @@ abstract class agent_pForm_entity extends agent_pForm
 
         $this->data->$assoc = $data->{$id};
 
-        foreach ($data as $k => $v) $o->{"{$assoc}_{$k}"} = $v;
+        foreach ($data as $k => $v)
+        {
+            if ($id == $k)
+            {
+                $k = 'id';
+            }
+
+            $o->{"{$assoc}_{$k}"} = $v;
+        }
 
         return $o;
     }
