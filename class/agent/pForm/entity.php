@@ -134,12 +134,16 @@ abstract class agent_pForm_entity extends agent_pForm
         foreach ($p as $p)
         {
             $getProp = 'get' . Doctrine\Common\Util\Inflector::classify($p);
-            $data[$p] = $entity->$getProp();
 
-            if ($data[$p] instanceof DateTime)
+            if (method_exists($entity, $getProp))
             {
-                $data[$p . '_timestamp'] = $data[$p]->format('U');
-                $data[$p] = $data[$p]->format('c');
+                $data[$p] = $entity->$getProp();
+
+                if ($data[$p] instanceof DateTime)
+                {
+                    $data[$p . '_timestamp'] = $data[$p]->format('U');
+                    $data[$p] = $data[$p]->format('c');
+                }
             }
         }
 
