@@ -23,10 +23,10 @@ class pForm_select extends self
             $this->entityClass = $param['entityClass'];
         }
 
-        if (isset($param['dql']))
+        if (isset($param['query']))
         {
             $param['loop'] = new loop_array(
-                EM()->createQuery($param['dql'])->getResult(),
+                $param['query']->getResult(),
                 'filter_rawArray'
             );
         }
