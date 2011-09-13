@@ -222,21 +222,27 @@ abstract class agent_pForm_entity extends agent_pForm
         return EM()->getRepository($this->entityClass);
     }
 
-    protected function getEntityAssociationData($o, $entity, $assoc)
+    /**
+     * Load an entity in the agent
+     *
+     * @param object $o
+     * @param object $entity
+     * @param string $field
+     * @return $o
+     */
+    public function loadEntity($o, $entity, $field)
     {
         $meta = $this->getEntityMetadata(get_class($entity));
 
-        if (!$meta->hasAssociation($assoc))
-            throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($entity, $assoc);
+        $getField = 'get' . Doctrine\Common\Util\Inflector::classify($field);
 
-        $getAssoc = 'get' . Doctrine\Common\Util\Inflector::classify($assoc);
-        $data = $this->getEntityData($entity->$getAssoc());
+        $data = $this->getEntityData($entity->$getField());
 
-        $assoc_mapping = $meta->getAssociationMapping($assoc);
+        $field_mapping = $meta->getAssociationMapping($field);
 
-        $id = $assoc_mapping['joinColumns'][0]['referencedColumnName'];
+        $id = $field_mapping['joinColumns'][0]['referencedColumnName'];
 
-        $this->data->$assoc = $data->{$id};
+        $this->data->$field = $data->{$id};
 
         foreach ($data as $k => $v)
         {
@@ -245,7 +251,7 @@ abstract class agent_pForm_entity extends agent_pForm
                 $k = 'id';
             }
 
-            $o->{"{$assoc}_{$k}"} = $v;
+            $o->{"{$field}_{$k}"} = $v;
         }
 
         return $o;
