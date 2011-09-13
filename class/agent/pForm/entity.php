@@ -257,11 +257,42 @@ abstract class agent_pForm_entity extends agent_pForm
         return $o;
     }
 
+    /**
+     * Load a collection loop in the agent
+     *
+     * @param object $o
+     * @param object $entity
+     * @param string $collection
+     * @return object $o
+     */
+    public function loadCollectionLoop($o, $entity, $collection)
+    {
+        $meta = $this->getEntityMetadata(get_class($entity));
+
+        $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
+
+        $coll = $entity->$getColl()->toArray();
+
+        $o->{$collection} = new loop_array($coll, array($this, 'filterCollection'));
+
+        return $o;
+    }
+
     function getDqlLoop($dql)
     {
         $dql = EM()->createQuery($dql);
 
         return new loop_array($dql->getArrayResult(), 'filter_rawArray');
+    }
+
+    function filterCollection($o)
+    {
+        $o = $o->VALUE;
+
+        if (is_object($o))
+            $o = $this->getEntityData($o);
+
+        return $o;
     }
 }
 
