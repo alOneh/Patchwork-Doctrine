@@ -22,7 +22,8 @@ abstract class agent_pForm_entity extends agent_pForm
     $entityUrl,
     $entityClass,
     $entity,
-    $entityIsNew = false;
+    $entityIsNew = false,
+    $entityIdentifier = array();
 
 
     function control()
@@ -50,7 +51,13 @@ abstract class agent_pForm_entity extends agent_pForm
 
         if (!empty($this->get->__1__))
         {
-            $this->entity = EM()->find($this->entityClass, $this->get->__1__);
+            // Use this to manage composite primary keys
+            $id = !empty($this->entityIdentifier)
+                    ? $this->entityIdentifier
+                    : $this->get->__1__;
+
+            $this->entity = EM()->find($this->entityClass, $id);
+
             $this->entity || patchwork::forbidden();
         }
         else if ($this->entityIsNew)
@@ -242,7 +249,7 @@ abstract class agent_pForm_entity extends agent_pForm
 
         $id = $field_mapping['joinColumns'][0]['referencedColumnName'];
 
-        $this->data->$field = $data->{$id};
+        $data->{$field} = $data->{$id};
 
         foreach ($data as $k => $v)
         {
