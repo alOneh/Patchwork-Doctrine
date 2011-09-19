@@ -278,11 +278,9 @@ abstract class agent_pForm_entity extends agent_pForm
         return $o;
     }
 
-    function getDqlLoop($dql)
+    function getQueryLoop(Doctrine\ORM\Query $query)
     {
-        $dql = EM()->createQuery($dql);
-
-        return new loop_array($dql->getArrayResult(), 'filter_rawArray');
+        return new loop_array($query->getArrayResult(), 'filter_rawArray');
     }
 
     function filterCollection($o)
