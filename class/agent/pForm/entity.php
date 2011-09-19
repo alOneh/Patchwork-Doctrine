@@ -270,10 +270,20 @@ abstract class agent_pForm_entity extends agent_pForm
         $meta = $this->getEntityMetadata(get_class($entity));
 
         $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
+        $coll = $entity->$getColl();
+
+        if ($coll instanceof \Doctrine\Common\Collections\ArrayCollection)
+        {
+            $filter = 'filterArrayCollection';
+        }
+        else if ($coll instanceof \Doctrine\ORM\PersistentCollection)
+        {
+            $filter = 'filterPersistentCollection';
+        }
 
         $coll = $entity->$getColl()->toArray();
 
-        $o->{$collection} = new loop_array($coll, array($this, 'filterCollection'));
+        $o->{$collection} = new loop_array($coll, array($this, $filter));
 
         return $o;
     }
@@ -283,12 +293,10 @@ abstract class agent_pForm_entity extends agent_pForm
         return new loop_array($query->getArrayResult(), 'filter_rawArray');
     }
 
-    function filterCollection($o)
+    function filterPersistentCollection($o)
     {
-        $o = $o->VALUE;
-
-        if (is_object($o))
-            $o = $this->getEntityData($o);
+        if (is_object($o->VALUE))
+            $o = $this->getEntityData($o->VALUE);
 
         return $o;
     }
