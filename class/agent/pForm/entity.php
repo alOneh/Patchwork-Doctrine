@@ -277,7 +277,21 @@ abstract class agent_pForm_entity extends agent_pForm
         $meta = $this->getEntityMetadata(get_class($entity));
 
         $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
-        $coll = $entity->$getColl();
+
+        if (method_exists($entity, $getColl))
+        {
+            $coll = $entity->$getColl();
+            $data = $coll->toArray();
+        }
+        else if (method_exists($meta->customRepositoryClassName, $getColl))
+        {
+            $coll = EM()->getRepository($meta->name)->$getColl($entity);
+            $data = $coll->toArray();
+        }
+        else
+        {
+            throws \InvalidArgumentException("The getter : {$collection} does not exists in {$meta->name} or {$meta->customRepositoryClassName}");
+        }
 
         if ($coll instanceof \Doctrine\Common\Collections\ArrayCollection)
         {
@@ -288,9 +302,7 @@ abstract class agent_pForm_entity extends agent_pForm
             $filter = 'filterPersistentCollection';
         }
 
-        $coll = $entity->$getColl()->toArray();
-
-        $o->{$collection} = new loop_array($coll, array($this, $filter));
+        $o->{$collection} = new loop_array($data, array($this, $filter));
 
         return $o;
     }
