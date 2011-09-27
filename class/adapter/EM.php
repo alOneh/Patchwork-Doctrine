@@ -32,7 +32,7 @@ class adapter_EM
         $config->setMetadataDriverImpl($driver);
         $config->setQueryCacheImpl($cache);
         $config->setProxyDir($CONFIG['doctrine.proxy.dir']);
-        $config->setAutoGenerateProxyClasses($CONFIG['doctrine.proxy.dir']);
+        $config->setAutoGenerateProxyClasses($CONFIG['doctrine.proxy.generate']);
         $config->setProxyNamespace($CONFIG['doctrine.proxy.namespace']);
 
         if (!empty($CONFIG['doctrine.dbal.logger']))
