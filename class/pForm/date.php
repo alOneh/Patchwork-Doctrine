@@ -14,6 +14,15 @@
 
 class pForm_date extends self
 {
+    protected $getDateTimeFromString = true;
+
+    function init(&$param)
+    {
+        if (isset($param['getDateTimeFromString']))
+            $this->getDateTimeFromString = $param['getDateTimeFromString'];
+
+        parent::init($param);
+    }
 
     function setValue($value)
     {
@@ -24,6 +33,10 @@ class pForm_date extends self
     function getDbValue()
     {
         $v = parent::getDbValue();
-        return $v ? new DateTime($v) : null;
+
+        if ($this->getDateTimeFromString)
+            $v = $v ? new DateTime($v) : null;
+
+        return $v;
     }
 }
