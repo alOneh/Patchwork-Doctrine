@@ -94,18 +94,10 @@ abstract class agent_pForm_entity extends agent_pForm
         }
     }
 
-    protected function formIsOk($f)
-    {
-        if (!parent::formIsOk($f)) return false;
-        $this->entityIsNew && EM()->persist($this->entity);
-
-        return true;
-    }
-
     protected function save($data)
     {
         $this->setEntityData($data);
-
+        $this->entityIsNew && EM()->persist($this->entity);
         EM()->flush();
 
         $id = $this->getEntityMetadata($this->entityClass);
@@ -165,11 +157,11 @@ abstract class agent_pForm_entity extends agent_pForm
     protected function setEntityData($data)
     {
         $meta = $this->getEntityMetadata($this->entityClass);
-        $id = $meta->getSingleIdentifierFieldName();
+        $id = $meta->getIdentifierFieldNames();
 
         foreach ($data as $f => $v)
         {
-            if (in_array($f, $meta->fieldNames) && $f !== $id)
+            if (in_array($f, $meta->fieldNames) && !in_array($f, $id))
             {
                 $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
                 $this->entity->$setter($v);
