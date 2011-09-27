@@ -259,22 +259,28 @@ abstract class agent_pForm_entity extends agent_pForm
      * @param object $o
      * @param object $entity
      * @param string $collection
+     * @param array  $params
      * @return object $o
      */
     public function loadCollectionLoop($o, $entity, $collection)
     {
         $meta = $this->getEntityMetadata(get_class($entity));
 
+        $params = func_get_args();
+
+        unset($params[0], $params[2]);
+
         $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
 
         if (method_exists($entity, $getColl))
         {
-            $coll = $entity->$getColl();
+            $coll = call_user_func_array(array($entity, $getColl), $params);
             $data = $coll->toArray();
         }
         else if (method_exists($meta->customRepositoryClassName, $getColl))
         {
-            $coll = EM()->getRepository($meta->name)->$getColl($entity);
+            $repo = EM()->getRepository($meta->name);
+            $coll = call_user_func_array(array($repo, $getColl), $params);
             $data = $coll->toArray();
         }
         else
