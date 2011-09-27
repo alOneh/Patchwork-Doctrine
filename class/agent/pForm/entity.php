@@ -226,31 +226,28 @@ abstract class agent_pForm_entity extends agent_pForm
      *
      * @param object $o
      * @param object $entity
-     * @param string $field
+     * @param string $prefix The prefix of the entity
      * @return $o
      */
-    public function loadEntity($o, $entity, $field)
+    public function loadEntity($o, $entity, $prefix)
     {
         $meta = $this->getEntityMetadata(get_class($entity));
 
-        $getField = 'get' . Doctrine\Common\Util\Inflector::classify($field);
+        $data = $this->getEntityData($entity);
 
-        $data = $this->getEntityData($entity->$getField());
-
-        $field_mapping = $meta->getAssociationMapping($field);
-
-        $id = $field_mapping['joinColumns'][0]['referencedColumnName'];
-
-        $data->{$field} = $data->{$id};
+        if (!$meta->isIdentifierComposite)
+        {
+            $this->data->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
+        }
 
         foreach ($data as $k => $v)
         {
-            if ($id == $k)
+            if (0 === strpos($k, $prefix . '_'))
             {
-                $k = 'id';
+                $k = substr($k, strlen($prefix) + 1);
             }
 
-            $o->{"{$field}_{$k}"} = $v;
+            $o->{"{$prefix}_{$k}"} = $v;
         }
 
         return $o;
