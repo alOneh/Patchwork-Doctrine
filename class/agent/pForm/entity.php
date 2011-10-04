@@ -49,7 +49,11 @@ abstract class agent_pForm_entity extends agent_pForm
 
         foreach ($u as $u) $this->entityClass .= ucfirst ($u); //TODO: Ugly
 
-        if (!empty($this->get->__1__))
+        if ($this->entityIsNew)
+        {
+            $this->entity = new $this->entityClass;
+        }
+        else if (!empty($this->get->__1__))
         {
             // Use this to manage composite primary keys
             $id = !empty($this->entityIdentifier)
@@ -60,10 +64,7 @@ abstract class agent_pForm_entity extends agent_pForm
 
             $this->entity || patchwork::forbidden();
         }
-        else if ($this->entityIsNew)
-        {
-            $this->entity = new $this->entityClass;
-        }
+
         else if ($this instanceof agent_pForm_entity_indexable)
         {
             $this->template = $this->entityUrl . '/index';
