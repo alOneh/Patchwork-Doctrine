@@ -286,7 +286,7 @@ abstract class agent_pForm_entity extends agent_pForm
         }
         else
         {
-            throws \InvalidArgumentException("The getter : {$collection} does not exists in {$meta->name} or {$meta->customRepositoryClassName}");
+            throw new \InvalidArgumentException("The getter : {$getColl} does not exists in {$meta->name} or {$meta->customRepositoryClassName}");
         }
 
         if ($coll instanceof \Doctrine\Common\Collections\ArrayCollection)
