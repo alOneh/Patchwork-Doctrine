@@ -238,7 +238,7 @@ abstract class agent_pForm_entity extends agent_pForm
 
         if (!$meta->isIdentifierComposite)
         {
-            $this->data->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
+            $data->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
         }
 
         foreach ($data as $k => $v)
