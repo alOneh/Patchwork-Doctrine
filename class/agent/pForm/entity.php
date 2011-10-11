@@ -232,23 +232,26 @@ abstract class agent_pForm_entity extends agent_pForm
      */
     public function loadEntity($o, $entity, $prefix)
     {
-        $meta = $this->getEntityMetadata(get_class($entity));
-
-        $data = $this->getEntityData($entity);
-
-        if (!$meta->isIdentifierComposite)
+        if ($entity)
         {
-            $data->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
-        }
+            $meta = $this->getEntityMetadata(get_class($entity));
 
-        foreach ($data as $k => $v)
-        {
-            if (0 === strpos($k, $prefix . '_'))
+            $data = $this->getEntityData($entity);
+
+            foreach ($data as $k => $v)
             {
-                $k = substr($k, strlen($prefix) + 1);
+                if (0 === strpos($k, $prefix . '_'))
+                {
+                    $k = substr($k, strlen($prefix) + 1);
+                }
+
+                $o->{"{$prefix}_{$k}"} = $v;
             }
 
-            $o->{"{$prefix}_{$k}"} = $v;
+            if (!$meta->isIdentifierComposite)
+            {
+                $o->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
+            }
         }
 
         return $o;
