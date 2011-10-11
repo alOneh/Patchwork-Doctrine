@@ -265,37 +265,44 @@ abstract class agent_pForm_entity extends agent_pForm
      */
     public function loadCollectionLoop($o, $entity, $collection)
     {
-        $meta = $this->getEntityMetadata(get_class($entity));
+        $data = array();
 
-        $params = func_get_args();
+        $filter = 'filterPersistentCollection';
 
-        unset($params[0], $params[2]);
+        if ($entity)
+        {
+            $meta = $this->getEntityMetadata(get_class($entity));
 
-        $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
+            $params = func_get_args();
 
-        if (method_exists($entity, $getColl))
-        {
-            $coll = call_user_func_array(array($entity, $getColl), $params);
-            $data = $coll->toArray();
-        }
-        else if (method_exists($meta->customRepositoryClassName, $getColl))
-        {
-            $repo = EM()->getRepository($meta->name);
-            $coll = call_user_func_array(array($repo, $getColl), $params);
-            $data = $coll->toArray();
-        }
-        else
-        {
-            throw new \InvalidArgumentException("The getter : {$getColl} does not exists in {$meta->name} or {$meta->customRepositoryClassName}");
-        }
+            unset($params[0], $params[2]);
 
-        if ($coll instanceof \Doctrine\Common\Collections\ArrayCollection)
-        {
-            $filter = 'filterArrayCollection';
-        }
-        else if ($coll instanceof \Doctrine\ORM\PersistentCollection)
-        {
-            $filter = 'filterPersistentCollection';
+            $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
+
+            if (method_exists($entity, $getColl))
+            {
+                $coll = call_user_func_array(array($entity, $getColl), $params);
+                $data = $coll->toArray();
+            }
+            else if (method_exists($meta->customRepositoryClassName, $getColl))
+            {
+                $repo = EM()->getRepository($meta->name);
+                $coll = call_user_func_array(array($repo, $getColl), $params);
+                $data = $coll->toArray();
+            }
+            else
+            {
+                throw new \InvalidArgumentException("The getter : {$getColl} does not exists in {$meta->name} or {$meta->customRepositoryClassName}");
+            }
+
+            if ($coll instanceof \Doctrine\Common\Collections\ArrayCollection)
+            {
+                $filter = 'filterArrayCollection';
+            }
+            else if ($coll instanceof \Doctrine\ORM\PersistentCollection)
+            {
+                $filter = 'filterPersistentCollection';
+            }
         }
 
         $o->{$collection} = new loop_array($data, array($this, $filter));
