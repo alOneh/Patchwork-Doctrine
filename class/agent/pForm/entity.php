@@ -285,6 +285,57 @@ abstract class agent_pForm_entity extends agent_pForm
 
         return $o;
     }
+
+    function filterArrayCollection($o)
+    {
+        $o = $o->VALUE;
+
+        if (isset($o[0]))
+        {
+            foreach ($o[0] as $k => $v) $o[$k] = $v;
+            unset($o[0]);
+        }
+
+        foreach ($o as $key => $value)
+        {
+            if (is_array($value))
+            {
+                foreach ($value as $k => $v)
+                {
+                    if (0 === strpos($k, $key . '_'))
+                    {
+                        $k = substr($k, strlen($key) + 1);
+                    }
+
+                    $o[$key . '_' . $k] = $v;
+                    unset($o[$key]);
+                }
+            }
+        }
+
+        $o = (object)$o;
+
+        return $this->filterDateTime($o);
+    }
+
+    function filterDateTime($o)
+    {
+        foreach ($o as $k => &$v)
+        {
+            if ($v instanceof DateTime)
+            {
+                $k .= '_timestamp';
+                $o->$k = $v->format('U');
+                $v = $v->format('c');
+            }
+            else if (is_array($v))
+            {
+                $v = $this->filterDateTime($v);
+            }
+        }
+
+        return $o;
+    }
 }
 
 interface agent_pForm_entity_indexable
