@@ -177,46 +177,6 @@ abstract class agent_pForm_entity extends agent_pForm
         }
     }
 
-    /**
-     * Return a loop of the association mapping of an entity
-     *
-     * @param string $assoc
-     * @return loop
-     */
-    protected function getAssociationLoop($assoc, Doctrine\ORM\Query $query = null)
-    {
-        $meta = $this->getEntityMetadata($this->entityClass);
-
-        if (!$meta->hasAssociation($assoc))
-            throw Doctrine\ORM\Mapping\MappingException::mappingNotFound($entity, $assoc);
-
-        if (!$this->entityIsNew)
-        {
-            $assoc = $meta->associationMappings[$assoc];
-
-            $id = $meta->getSingleIdentifierFieldName();
-            $id = 'get' . Doctrine\Common\Util\Inflector::classify($id);
-
-            if ($query === null)
-            {
-                $dql = EM()->createQueryBuilder();
-                $dql->select('a')
-                    ->from($assoc['targetEntity'], 'a');
-                !$assoc['isOwningSide']
-                    ? $dql->where("a.{$assoc['mappedBy']} = :id")
-                    : $dql->where("a.{$meta->getSingleIdentifierFieldName()} = :id");
-                $dql->setParameter('id', $this->entity->$id());
-                $query = $dql->getQuery();
-            }
-
-            return !$meta->isSingleValuedAssociation($assoc['fieldName'])
-                        ? new loop_array($query->getArrayResult(), 'filter_rawArray')
-                        : $query->getOneOrNullResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-        }
-
-        return new loop_array(array());
-    }
-
     protected function getRepository()
     {
         return EM()->getRepository($this->entityClass);
