@@ -49,7 +49,11 @@ abstract class agent_pForm_entity extends agent_pForm
 
         foreach ($u as $u) $this->entityClass .= ucfirst ($u); //TODO: Ugly
 
-        if (!empty($this->get->__1__))
+        if ($this->entityIsNew)
+        {
+            $this->entity = new $this->entityClass;
+        }
+        else if (!empty($this->get->__1__))
         {
             // Use this to manage composite primary keys
             $id = !empty($this->entityIdentifier)
@@ -60,10 +64,7 @@ abstract class agent_pForm_entity extends agent_pForm
 
             $this->entity || patchwork::forbidden();
         }
-        else if ($this->entityIsNew)
-        {
-            $this->entity = new $this->entityClass;
-        }
+
         else if ($this instanceof agent_pForm_entity_indexable)
         {
             $this->template = $this->entityUrl . '/index';
@@ -231,23 +232,26 @@ abstract class agent_pForm_entity extends agent_pForm
      */
     public function loadEntity($o, $entity, $prefix)
     {
-        $meta = $this->getEntityMetadata(get_class($entity));
-
-        $data = $this->getEntityData($entity);
-
-        if (!$meta->isIdentifierComposite)
+        if ($entity)
         {
-            $this->data->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
-        }
+            $meta = $this->getEntityMetadata(get_class($entity));
 
-        foreach ($data as $k => $v)
-        {
-            if (0 === strpos($k, $prefix . '_'))
+            $data = $this->getEntityData($entity);
+
+            foreach ($data as $k => $v)
             {
-                $k = substr($k, strlen($prefix) + 1);
+                if (0 === strpos($k, $prefix . '_'))
+                {
+                    $k = substr($k, strlen($prefix) + 1);
+                }
+
+                $o->{"{$prefix}_{$k}"} = $v;
             }
 
-            $o->{"{$prefix}_{$k}"} = $v;
+            if (!$meta->isIdentifierComposite)
+            {
+                $o->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
+            }
         }
 
         return $o;
@@ -264,37 +268,44 @@ abstract class agent_pForm_entity extends agent_pForm
      */
     public function loadCollectionLoop($o, $entity, $collection)
     {
-        $meta = $this->getEntityMetadata(get_class($entity));
+        $data = array();
 
-        $params = func_get_args();
+        $filter = 'filterPersistentCollection';
 
-        unset($params[0], $params[2]);
+        if ($entity)
+        {
+            $meta = $this->getEntityMetadata(get_class($entity));
 
-        $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
+            $params = func_get_args();
 
-        if (method_exists($entity, $getColl))
-        {
-            $coll = call_user_func_array(array($entity, $getColl), $params);
-            $data = $coll->toArray();
-        }
-        else if (method_exists($meta->customRepositoryClassName, $getColl))
-        {
-            $repo = EM()->getRepository($meta->name);
-            $coll = call_user_func_array(array($repo, $getColl), $params);
-            $data = $coll->toArray();
-        }
-        else
-        {
-            throw new \InvalidArgumentException("The getter : {$collection} does not exists in {$meta->name} or {$meta->customRepositoryClassName}");
-        }
+            unset($params[0], $params[2]);
 
-        if ($coll instanceof \Doctrine\Common\Collections\ArrayCollection)
-        {
-            $filter = 'filterArrayCollection';
-        }
-        else if ($coll instanceof \Doctrine\ORM\PersistentCollection)
-        {
-            $filter = 'filterPersistentCollection';
+            $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
+
+            if (method_exists($entity, $getColl))
+            {
+                $coll = call_user_func_array(array($entity, $getColl), $params);
+                $data = $coll->toArray();
+            }
+            else if (method_exists($meta->customRepositoryClassName, $getColl))
+            {
+                $repo = EM()->getRepository($meta->name);
+                $coll = call_user_func_array(array($repo, $getColl), $params);
+                $data = $coll->toArray();
+            }
+            else
+            {
+                throw new \InvalidArgumentException("The getter : {$getColl} does not exists in {$meta->name} or {$meta->customRepositoryClassName}");
+            }
+
+            if ($coll instanceof \Doctrine\Common\Collections\ArrayCollection)
+            {
+                $filter = 'filterArrayCollection';
+            }
+            else if ($coll instanceof \Doctrine\ORM\PersistentCollection)
+            {
+                $filter = 'filterPersistentCollection';
+            }
         }
 
         $o->{$collection} = new loop_array($data, array($this, $filter));
