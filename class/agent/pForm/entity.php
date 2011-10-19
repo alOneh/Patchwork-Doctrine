@@ -168,8 +168,15 @@ abstract class agent_pForm_entity extends agent_pForm
                 $repo = EM()->getRepository($meta->name);
                 $repo->$repoSetter($this->entity, $v);
             }
-            else if (in_array($f, $meta->fieldNames) && !in_array($f, $id) || isset($meta->associationMappings[$f]))
+            else if (in_array($f, $meta->fieldNames) && !in_array($f, $id))
             {
+                $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
+                $this->entity->$setter($v);
+            }
+            else if (isset($meta->associationMappings[$f]))
+            {
+                $v || $v = null;
+
                 $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
                 $this->entity->$setter($v);
             }
