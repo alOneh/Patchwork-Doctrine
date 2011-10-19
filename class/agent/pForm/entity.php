@@ -47,7 +47,7 @@ abstract class agent_pForm_entity extends agent_pForm
 
         $this->entityClass = self::$entityNs . "\\";
 
-        foreach ($u as $u) $this->entityClass .= ucfirst ($u); //TODO: Ugly
+        foreach ($u as $u) $this->entityClass .= ucfirst($u); //TODO: Ugly
 
         if ($this->entityIsNew)
         {
@@ -57,8 +57,8 @@ abstract class agent_pForm_entity extends agent_pForm
         {
             // Use this to manage composite primary keys
             $id = !empty($this->entityIdentifier)
-                    ? $this->entityIdentifier
-                    : $this->get->__1__;
+                ? $this->entityIdentifier
+                : $this->get->__1__;
 
             $this->entity = EM()->find($this->entityClass, $id);
 
@@ -147,7 +147,7 @@ abstract class agent_pForm_entity extends agent_pForm
             }
         }
 
-        return (object) $data;
+        return (object)$data;
     }
 
     /**
@@ -162,15 +162,14 @@ abstract class agent_pForm_entity extends agent_pForm
 
         foreach ($data as $f => $v)
         {
-            if (in_array($f, $meta->fieldNames) && !in_array($f, $id))
+            $repoSetter = 'setEntity' . Doctrine\Common\Util\Inflector::classify($f);
+            if (method_exists($meta->customRepositoryClassName, $repoSetter))
             {
-                $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
-                $this->entity->$setter($v);
+                $repo = EM()->getRepository($meta->name);
+                $repo->$repoSetter($this->entity, $v);
             }
-            else if (isset($meta->associationMappings[$f]))
+            else if (in_array($f, $meta->fieldNames) && !in_array($f, $id) || isset($meta->associationMappings[$f]))
             {
-                $v || $v = null;
-
                 $setter = 'set' . Doctrine\Common\Util\Inflector::classify($f);
                 $this->entity->$setter($v);
             }
@@ -341,5 +340,6 @@ abstract class agent_pForm_entity extends agent_pForm
 interface agent_pForm_entity_indexable
 {
     function composeIndex($o);
+
     function composeEntity($o);
 }
