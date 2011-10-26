@@ -17,22 +17,27 @@ use Doctrine\DBAL\Logging\SQLLogger;
 
 /**
  * A SQL logger that logs queries and parameters to the Patchwork debug window.
- * 
+ *
  */
 class PatchworkSQLLogger implements SQLLogger
 {
     protected $queryInfo;
+
+    public $start = null;
 
     /**
      * {@inheritdoc}
      */
     public function startQuery($sql, array $params = null, array $types = null)
     {
+        $this->start = microtime(true);
+
         $this->queryInfo = array(
             'sql'    => $sql,
             'params' => $params,
-            'types'  => $types
-        ));
+            'types'  => $types,
+            'executionMS' => 0,
+        );
     }
 
     /**
@@ -40,7 +45,10 @@ class PatchworkSQLLogger implements SQLLogger
      */
     public function stopQuery()
     {
-        \Patchwork::log('doctrine-sql', $this->queryInfo);
+        $this->queryInfo['executionMS'] = (microtime(true) - $this->start) * 1000;
+
+        \Patchwork::log('sql', $this->queryInfo);
         $this->queryInfo = array();
+        $this->start = null;
     }
 }
