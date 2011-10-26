@@ -85,6 +85,10 @@ abstract class agent_pForm_entity extends agent_pForm
                 $this->data = $this->getEntityData();
                 foreach ($this->data as $k => $v) $o->$k = $v;
             }
+            else
+            {
+                $this->data = (object) array();
+            }
 
             if ($this instanceof agent_pForm_entity_indexable)
             {
@@ -216,7 +220,7 @@ abstract class agent_pForm_entity extends agent_pForm
 
             if (!$meta->isIdentifierComposite)
             {
-                $o->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
+                $o->{$prefix} = $this->data->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
             }
         }
 
