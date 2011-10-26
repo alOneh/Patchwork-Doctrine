@@ -250,17 +250,18 @@ abstract class agent_pForm_entity extends agent_pForm
 
             unset($params[0], $params[2]);
 
+            $repoGetColl = 'getEntity' . Doctrine\Common\Util\Inflector::classify($collection);
             $getColl = 'get' . Doctrine\Common\Util\Inflector::classify($collection);
 
-            if (method_exists($entity, $getColl))
-            {
-                $coll = call_user_func_array(array($entity, $getColl), $params);
-                $data = $coll->toArray();
-            }
-            else if (method_exists($meta->customRepositoryClassName, $getColl))
+            if (method_exists($meta->customRepositoryClassName, $repoGetColl))
             {
                 $repo = EM()->getRepository($meta->name);
-                $coll = call_user_func_array(array($repo, $getColl), $params);
+                $coll = call_user_func_array(array($repo, $repoGetColl), $params);
+                $data = $coll->toArray();
+            }
+            else if (method_exists($entity, $getColl))
+            {
+                $coll = call_user_func_array(array($entity, $getColl), $params);
                 $data = $coll->toArray();
             }
             else
