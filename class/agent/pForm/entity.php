@@ -85,7 +85,7 @@ abstract class agent_pForm_entity extends agent_pForm
                 $this->data = $this->getEntityData();
                 foreach ($this->data as $k => $v) $o->$k = $v;
             }
-            else
+            else if (!$this->data)
             {
                 $this->data = (object) array();
             }
