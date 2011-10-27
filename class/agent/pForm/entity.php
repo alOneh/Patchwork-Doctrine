@@ -82,12 +82,8 @@ abstract class agent_pForm_entity extends agent_pForm
         {
             if (!$this->entityIsNew)
             {
-                $this->data = $this->getEntityData();
+                $this->data += $this->getEntityData();
                 foreach ($this->data as $k => $v) $o->$k = $v;
-            }
-            else if (!$this->data)
-            {
-                $this->data = (object) array();
             }
 
             if ($this instanceof agent_pForm_entity_indexable)
@@ -151,7 +147,7 @@ abstract class agent_pForm_entity extends agent_pForm
             }
         }
 
-        return (object)$data;
+        return $data;
     }
 
     /**
@@ -220,7 +216,7 @@ abstract class agent_pForm_entity extends agent_pForm
 
             if (!$meta->isIdentifierComposite)
             {
-                $o->{$prefix} = $this->data->{$prefix} = $data->{$meta->getSingleIdentifierColumnName()};
+                $o->{$prefix} = $this->data[$prefix] = $data[$meta->getSingleIdentifierColumnName()];
             }
         }
 
@@ -292,7 +288,7 @@ abstract class agent_pForm_entity extends agent_pForm
     function filterPersistentCollection($o)
     {
         if (is_object($o->VALUE))
-            $o = $this->getEntityData($o->VALUE);
+            $o = (object) $this->getEntityData($o->VALUE);
 
         return $o;
     }
